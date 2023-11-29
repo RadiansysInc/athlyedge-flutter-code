@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_project/app/utils/prefs_helper.dart';
 import 'package:flutter_project/data/model/equipment_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GetEquipmentRepository {
+
   var allEquipmentList = [
     EquipmentModel(
         id: 1,
@@ -42,14 +44,10 @@ class GetEquipmentRepository {
     )
   ];
 
-  Future<List<EquipmentModel>> getEquipmentList() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> equipmentIds = prefs.getStringList("selected_equipment") ?? [];
-    debugPrint("equipmentIds::${equipmentIds.toList()}");
-    if(equipmentIds.isNotEmpty) {
-      for (var element in allEquipmentList) {
-        element.isSelected = equipmentIds.contains(element.id.toString());
-      }
+  Future<List<EquipmentModel>> getEquipmentList(PreferenceHelper helper) async {
+    for (var element in allEquipmentList) {
+      element.isSelected = false;
+      element.isSelected = helper.equipmentList.contains(element.id.toString());
     }
     return allEquipmentList;
   }

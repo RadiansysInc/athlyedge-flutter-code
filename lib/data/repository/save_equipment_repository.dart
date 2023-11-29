@@ -1,18 +1,14 @@
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer';
+
+import 'package:flutter_project/app/utils/prefs_helper.dart';
 
 class ActionEquipmentRepository {
-  Future<bool> saveEquipment(String equipId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> equipmentIds = prefs.getStringList("selected_equipment") ?? [];
-    equipmentIds.add(equipId);
-    return await prefs.setStringList("selected_equipment", equipmentIds);
+  Future<bool> saveEquipment(PreferenceHelper helper, String equipId) async {
+    return await helper.saveEquipID(equipId);
   }
-
-  Future<bool> removeEquipment(String equipId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> equipmentIds = prefs.getStringList("selected_equipment") ?? [];
-    equipmentIds.removeWhere((element) => element == equipId);
-    return await prefs.setStringList("selected_equipment", equipmentIds);
+  Future<bool> removeEquipment(PreferenceHelper helper, String equipId) async {
+    log("removeEquipment::::");
+    return await helper.removeEquipID(equipId);
   }
 }

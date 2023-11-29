@@ -2,10 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_project/data/bloc/equipment_cubit.dart';
 import 'package:flutter_project/data/bloc/state/equipment_state.dart';
+import 'package:flutter_project/data/model/equipment_model.dart';
 import 'package:flutter_project/presentation/equipment/equipment_card.dart';
+import 'package:flutter_project/presentation/equipment/widgets/custom_button.dart';
 
-class EquipmentListScreen extends StatelessWidget {
+class EquipmentListScreen extends StatefulWidget {
   const EquipmentListScreen({super.key});
+
+  @override
+  State<EquipmentListScreen> createState() => _EquipmentListScreenState();
+}
+
+class _EquipmentListScreenState extends State<EquipmentListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () async {
+      BlocProvider.of<EquipmentCubit>(context)
+          .fetchEquipmentList(showLoading: true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,72 +29,79 @@ class EquipmentListScreen extends StatelessWidget {
       backgroundColor: const Color.fromRGBO(39, 40, 42, 1),
       body: Column(
         children: [
-          Expanded(
-            child: Center(
-              child: BlocBuilder<EquipmentCubit, EquipmentState>(
-                builder: (context, state) {
-                  return state.when(init: () {
-                    context
-                        .read<EquipmentCubit>()
-                        .fetchEquipmentList(showLoading: false);
-                    return const SizedBox.shrink();
-                  }, loading: () {
-                    return const CircularProgressIndicator(
+          _buildWithBloc(),
+          _buildAction(context)
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWithBloc() {
+    return Expanded(
+      child: Center(
+        child: BlocConsumer<EquipmentCubit, EquipmentState>(
+          listener: (context, state) {
+            state.maybeMap(
+                error: (msg) {
+                  _showSnackBar(context,  msg.error, isError: true);
+                }, orElse: () {});
+          },
+          builder: (context, state) {
+            return state.when(
+                init: () => const SizedBox.shrink(),
+                loading: () => const CircularProgressIndicator(
                       color: Colors.white,
                       backgroundColor: Colors.amber,
-                    );
-                  }, success: (equipmentList) {
-                    return GridView.count(
-                        shrinkWrap: true,
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 1.0,
-                        mainAxisSpacing: 1.0,
-                        children: List.generate(equipmentList.length, (index) {
-                          return InkWell(
-                              onTap: () {
-                                context
-                                    .read<EquipmentCubit>()
-                                    .updateEquipmentData(
-                                        equipmentList[index], context);
-                              },
-                              child: EquipmentCard(
-                                  equipmentModel: equipmentList[index]));
-                        }));
-                  }, error: (msg) {
-                    return Text("Something went wrong: ${msg.toString()}");
-                  });
-                },
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              ElevatedButton(
-                  onPressed: () {
-                    BlocProvider.of<EquipmentCubit>(context)
-                        .fetchEquipmentList(showLoading: true);
-                  },
-                  style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(Colors.deepOrangeAccent)),
-                  child: const Text("Refresh")),
-              ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                        "Data Loaded.",
-                      ),
-                      backgroundColor: Colors.green,
-                    ));
-                  },
-                  style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(Colors.deepOrangeAccent)),
-                  child: const Text("Show Message")),
-            ],
-          )
+                    ),
+                success: (equipmentList) =>
+                    _buildEquipList(context, equipmentList),
+                error: (msg) => const SizedBox.shrink());
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEquipList(
+      BuildContext context, List<EquipmentModel> equipmentList) {
+    return GridView.count(
+        shrinkWrap: true,
+        crossAxisCount: 3,
+        crossAxisSpacing: 1.0,
+        mainAxisSpacing: 1.0,
+        children: equipmentList
+            .map((equipment) => EquipmentCard(
+                action: () => BlocProvider.of<EquipmentCubit>(context)
+                    .updateEquipmentData(equipment),
+                  equipmentModel: equipment,
+                ))
+            .toList());
+  }
+
+  Widget _buildAction(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          CustomButton(
+              onPressed: () => BlocProvider.of<EquipmentCubit>(context)
+                  .fetchEquipmentList(showLoading: true),
+              title: 'Refresh'),
+          CustomButton(
+              onPressed: () => _showSnackBar(context, "Data Loaded"),
+              title: 'Show message')
         ],
+      ),
+    );
+  }
+
+  _showSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
       ),
     );
   }

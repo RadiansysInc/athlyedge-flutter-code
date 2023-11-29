@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_project/data/bloc/equipment_cubit.dart';
-import 'package:flutter_project/data/repository/get_equipment_repository.dart';
-import 'package:flutter_project/data/repository/save_equipment_repository.dart';
-import 'package:flutter_project/presentation/equipment/equipment_list.dart';
+import 'package:flutter_project/app/di/injector.dart';
+import 'package:flutter_project/presentation/home/launcher_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDependencies();
   runApp(const MyApp());
 }
 
@@ -29,10 +28,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: BlocProvider<EquipmentCubit>(
-        create: (_) => EquipmentCubit(GetEquipmentRepository(), ActionEquipmentRepository()),
-        child: const EquipmentListScreen(),
-      ),
+      home: const AppLauncherPage(),
     );
   }
 }
